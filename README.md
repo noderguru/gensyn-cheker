@@ -10,6 +10,8 @@ Track your IDs and nicknames in the Gensyn leaderboard with auto Telegram update
 
 ⏱ Автоматические запросы с интервалом в секундах из настроек
 
+📩 Уведомления в Telegram
+
 ## ⚙ Настройка
 
 ```bash
