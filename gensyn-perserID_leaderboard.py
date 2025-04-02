@@ -145,7 +145,7 @@ def collect_and_send():
 def main():
     while True:
         collect_and_send()
-        print(f"\nЖдём {SEND_INTERVAL_SECONDS} seconds until the next check...\n")
+        print(f"\nWait {SEND_INTERVAL_SECONDS} seconds until the next check...\n")
         time.sleep(SEND_INTERVAL_SECONDS)
 
 if __name__ == '__main__':
