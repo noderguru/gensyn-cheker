@@ -1,98 +1,71 @@
-Leaderboard Parser 🚀
+# 📊 Gensyn Leaderboard Tracker Bot
 
-This Python script performs the following tasks:
+Отслеживание ваших ID и никнеймов в лидерборде Gensyn с автоматической отправкой уведомлений в Telegram 💬
 
-Fetches data from the Gensyn Swarm Leaderboard API.
+Track your IDs and nicknames in the Gensyn leaderboard with auto Telegram updates 💬
 
-Filters the results based on a list of IDs provided in the id.txt file. If an ID in the file starts with the prefix "F-", the prefix is removed automatically.
+## 🚀 Возможности | Features
 
-Displays a table in the console with two columns: ID and Score. The score is truncated (not rounded) to four decimal places.
+🔍 Проверка ID и nickname'ов из файла id.txt
 
-Requirements
-Python 3.x
+⏱ Автоматические запросы с интервалом в секундах из настроек
 
-```git glone https://github.com/noderguru/gensyn-cheker.git```
+## ⚙ Настройка
 
-```cd gensyn-cheker```
+```bash
+git clone https://github.com/noderguru/gensyn-cheker.git
+cd gensyn-cheker
+```
+```bash
+tmux new -s gensyn-cheker
+```
 
-requests library – Install it with:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+```bash
+pip install requests
+```
+```bash
+nano id.txt
+```
+вставьте имя вашего воркера (три слова при старте ноды) ```или``` id ноды (указано рядом с именем в квадратных скобках и начинается на "Qm"), каждый с новой строки
 
-```pip install requests```
+### Если надо получать уведомления в Телеграм:
 
-How to Use
+Создайте бота через ```@BotFather``` затем зайдите в него и нажмите start
 
-```nano id.txt```
+Получите TOKEN бота
 
-Add your IDs to this file, one per line.
-Example:
+Получите ваш CHAT_ID через ```@userinfobot```
 
-F-1cXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+Отредактируйте переменные в начале скрипта:
 
-F-75XXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+```
+SEND_TELEGRAM = True/False
 
-Run the script:
+TELEGRAM_BOT_TOKEN = "ВАШ_ТОКЕН"
 
-```python3 gensyn-perserID_leaderboard.py```
+TELEGRAM_CHAT_ID = "ВАШ_CHAT_ID"
 
-Example Output
+SEND_INTERVAL_SECONDS = 300  # интервал в секундах
+```
+## ▶️ Запуск
+```bash
+python3 gensyn-perserID_leaderboard.py
+```
+![image](https://github.com/user-attachments/assets/556d8ff8-b5d2-4881-afa5-0406f7f07b12)
 
-![image](https://github.com/user-attachments/assets/e26aed58-043a-41a0-9d33-efa1adea21cd)
-
-
-ID can be seen in the container logs
-
-```cd rl-swarm && docker-compose logs -f swarm_node```
-
-![image](https://github.com/user-attachments/assets/93bd7518-8822-4f04-9f12-1b5d7b7751c1)
-
-
-
-Парсер Leaderboard 🚀
-Этот Python-скрипт выполняет следующие задачи:
-
-Получает данные с API таблицы лидеров Gensyn Swarm.
-
-Фильтрует результаты на основе списка ID, указанных в файле id.txt. Если ID в файле начинается с префикса "F-", префикс удаляется автоматически.
-
-Выводит таблицу в консоли с двумя столбцами: ID и Score. Значение score обрезается (без округления) до четырех знаков после запятой.
-
-Требования
-
-Python 3.x
-
-```git clone https://github.com/noderguru/gensyn-cheker.git```
-
-```cd gensyn-cheker```
-
-Библиотека requests – установите её с помощью:
-
-```pip install requests```
-
-Как использовать
-
-Откройте файл id.txt:
-
-```nano id.txt```
-
-Добавьте свои ID в этот файл, по одному в строке.
-
-Пример:
-
-F-1cXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-
-F-75XXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
-
-Запустите скрипт:
-
-```python3 gensyn-perserID_leaderboard.py```
-
-Пример вывода
-
-![image](https://github.com/user-attachments/assets/e26aed58-043a-41a0-9d33-efa1adea21cd)
-
-ID можно найти в логах контейнера:
+## Если телега не используется то результат будет выводится в консоль
+![image](https://github.com/user-attachments/assets/8a478783-0256-4a40-9c39-e9c04bad7c67)
 
 
-```cd rl-swarm && docker-compose logs -f swarm_node```
 
-![image](https://github.com/user-attachments/assets/93bd7518-8822-4f04-9f12-1b5d7b7751c1)
+
+
+
+
+
+
+
