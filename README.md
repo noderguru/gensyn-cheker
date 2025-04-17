@@ -55,7 +55,10 @@ python3 gensyn-perserID.py
 ```
 будут отображаться последние 10 символов Node ID для комфортного восприятия
 
-![image](https://github.com/user-attachments/assets/7a9c28a4-86f2-4502-b78b-77c3d7eb6027)
+Метрика ```total votes``` показывает сколько раз конкретный EOA (адрес пользователя) проголосовал за кого-либо в рамках всех прошедших раундов.
+
+![image](https://github.com/user-attachments/assets/bdbd96a7-b14b-4c0d-aee9-89c977036363)
+
 
 
 
