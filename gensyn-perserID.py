@@ -4,7 +4,7 @@ from eth_abi import encode, decode
 from eth_utils import keccak
 
 # === НАСТРОЙКИ ===
-ALCHEMY_RPC = "https://gensyn-testnet.g.alchemy.com/v2/iBYs2GoyiHYlFl4o4MvBeM8-UMpDAcjx"
+ALCHEMY_RPC = "https://gensyn-testnet.g.alchemy.com/public"
 CONTRACT = "0x69C6e1D608ec64885E7b185d39b04B491a71768C"
 PEER_ID_FILE = "peer_id.txt"
 SEND_INTERVAL_SECONDS = 3600
