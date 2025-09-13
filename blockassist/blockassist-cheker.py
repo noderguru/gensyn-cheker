@@ -13,14 +13,15 @@ NOTIFY_TARGET = os.getenv("NOTIFY_TARGET", "console")  # console | both
 ACCOUNT_FILE = os.getenv("ACCOUNT_FILE", "account_EOA.txt")
 PROXY_FILE   = os.getenv("PROXY_FILE", "proxy.txt")
 
-REQUEST_DELAY_MIN = float(os.getenv("REQUEST_DELAY_MIN", "1"))
-REQUEST_DELAY_MAX = float(os.getenv("REQUEST_DELAY_MAX", "3"))
+REQUEST_DELAY_MIN = float(os.getenv("REQUEST_DELAY_MIN", "0"))
+REQUEST_DELAY_MAX = float(os.getenv("REQUEST_DELAY_MAX", "0"))
 NOTIFY_DELAY_SEC  = float(os.getenv("NOTIFY_DELAY_SEC", "0.5"))
-
 API_URL_TEMPLATE  = os.getenv("API_URL_TEMPLATE", "https://dashboard.gensyn.ai/api/v1/users/{address}/blockassist/stats")
 REQUEST_TIMEOUT   = int(os.getenv("REQUEST_TIMEOUT", "15"))
 RETRY_PER_PROXY   = int(os.getenv("RETRY_PER_PROXY", "1"))
 RETRY_ACCOUNT_MAX = int(os.getenv("RETRY_ACCOUNT_MAX", "5"))
+
+POLL_INTERVAL_SEC = float(os.getenv("POLL_INTERVAL_SEC", "60"))
 
 IP_LOOKUP_URL     = os.getenv("IP_LOOKUP_URL", "https://api.ipify.org")
 
@@ -39,7 +40,6 @@ def number_to_emoji(i: int) -> str:
     return "🔢"  # 11+
 
 def read_accounts(path: str) -> List[Tuple[str, Optional[str]]]:
-
     if not os.path.isfile(path):
         raise FileNotFoundError(f"Файл {path} не найден")
     out: List[Tuple[str, Optional[str]]] = []
@@ -48,13 +48,11 @@ def read_accounts(path: str) -> List[Tuple[str, Optional[str]]]:
             line = raw.strip()
             if not line:
                 continue
-
             parts = line.split()
             if len(parts) == 2 and ADDR_RE.fullmatch(parts[1]):
                 label, addr = parts
                 out.append((addr, label))
                 continue
-
             addrs = ADDR_RE.findall(line)
             comment = None
             if "-" in line or "—" in line:
@@ -129,7 +127,6 @@ def get_proxy_public_ip(proxy: str) -> Optional[str]:
         )
         if r.status_code == 200:
             ip = r.text.strip()
-            # простая проверка IPv4
             if re.fullmatch(r"\d{1,3}(\.\d{1,3}){3}", ip):
                 PROXY_IP_CACHE[proxy] = ip
                 return ip
@@ -157,6 +154,10 @@ def send_tg(text: str) -> bool:
         return False
 
 def send_tg_chunks(lines: List[str], header: str = "") -> None:
+    text = ("\n".join(([header] if header else []) + lines))
+    if len(text) <= 3500:
+        send_tg(text)
+        return
     chunk, size, limit = [], 0, 3500
     if header:
         chunk.append(header); size += len(header) + 1
@@ -168,13 +169,13 @@ def send_tg_chunks(lines: List[str], header: str = "") -> None:
     if chunk:
         send_tg("\n".join(chunk))
 
-def one_pass() -> None:
+def one_pass() -> List[str]:
     accounts = read_accounts(ACCOUNT_FILE)
     proxies  = read_proxies(PROXY_FILE)
     if not accounts:
-        print("[ERR] В account_EOA.txt нет адресов"); return
+        print("[ERR] В account_EOA.txt нет адресов"); return []
     if not proxies:
-        print("[ERR] В proxy.txt нет прокси"); return
+        print("[ERR] В proxy.txt нет прокси"); return []
     if len(proxies) < len(accounts):
         print(f"[WARN] Аккаунтов {len(accounts)} > прокси {len(proxies)} — уникальность 1:1 недостижима.")
 
@@ -186,7 +187,10 @@ def one_pass() -> None:
     result_lines = []
 
     for i, (addr, note) in enumerate(accounts, 1):
-        time.sleep(random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX))
+
+        if REQUEST_DELAY_MAX > 0 or REQUEST_DELAY_MIN > 0:
+            time.sleep(random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX))
+
         p = get_proxy(pool, used, proxies)
         alt = [x for x in proxies if x != p]; random.shuffle(alt)
 
@@ -202,28 +206,23 @@ def one_pass() -> None:
             line_console = f"{emoji} {last10} | {BOLD}ERROR{RESET}{ip_sfx}"
             print(line_console)
             print(f"Progress: {i}/{total}", flush=True)
-            # телега (HTML)
             line_html = f"{emoji} <code>{last10}</code> | <b>ERROR</b>"
         else:
             part = data.get("participation")
-            # консоль — part-n (число жирным)
             line_console = f"{emoji} {last10} | part-{BOLD}{part}{RESET}{ip_sfx}"
             if note:
                 line_console += f" | {note}"
             print(line_console)
             print(f"Progress: {i}/{total}", flush=True)
-            # телега — адрес копируемый (<code>), part-n (число жирным)
+
             line_html = f"{emoji} <code>{last10}</code> | part-<b>{part}</b>"
             if note:
                 line_html += f" | {note}"
 
         result_lines.append(line_html)
 
-    if NOTIFY_TARGET == "both":
-        header = "📊 BlockAssist stats"
-        send_tg_chunks(result_lines, header=header)
-
     print("[DONE] Проход завершён.")
+    return result_lines
 
 def main():
     def handle_sigint(sig, frame):
@@ -231,8 +230,21 @@ def main():
         raise SystemExit(0)
     signal.signal(signal.SIGINT, handle_sigint)
 
+    next_tick = time.monotonic()  # стартовая точка
     while True:
-        one_pass()
+        start = time.monotonic()
+        lines = one_pass()
+
+        if lines and NOTIFY_TARGET == "both":
+            send_tg_chunks(lines, header="📊 BlockAssist stats")
+
+        next_tick += POLL_INTERVAL_SEC
+        sleep_s = max(0.0, next_tick - time.monotonic())
+        if sleep_s > 0:
+            print(f"[SLEEP] До следующего опроса: {sleep_s:.1f}s")
+            time.sleep(sleep_s)
+        else:
+            next_tick = time.monotonic()
 
 if __name__ == "__main__":
     main()
