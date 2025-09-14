@@ -15,7 +15,7 @@ PROXY_FILE   = os.getenv("PROXY_FILE", "proxy.txt")
 
 REQUEST_DELAY_MIN = float(os.getenv("REQUEST_DELAY_MIN", "0"))
 REQUEST_DELAY_MAX = float(os.getenv("REQUEST_DELAY_MAX", "0"))
-NOTIFY_DELAY_SEC  = float(os.getenv("NOTIFY_DELAY_SEC", "0.5"))
+NOTIFY_DELAY_SEC  = float(os.getenv("NOTIFY_DELAY_SEC", "0.5"))  # пауза только между чанками сообщений
 API_URL_TEMPLATE  = os.getenv("API_URL_TEMPLATE", "https://dashboard.gensyn.ai/api/v1/users/{address}/blockassist/stats")
 REQUEST_TIMEOUT   = int(os.getenv("REQUEST_TIMEOUT", "15"))
 RETRY_PER_PROXY   = int(os.getenv("RETRY_PER_PROXY", "1"))
@@ -29,9 +29,10 @@ ADDR_RE = re.compile(r"(?i)\b0x[a-f0-9]{40}\b")
 
 BOLD  = "\033[1m"
 RESET = "\033[0m"
-
+GREEN = "\033[92m"
+RED   = "\033[91m"
 PROXY_IP_CACHE: Dict[str, Optional[str]] = {}
-
+PREV_PART: Dict[str, int] = {}
 def number_to_emoji(i: int) -> str:
     if 1 <= i <= 9:
         return f"{i}\N{COMBINING ENCLOSING KEYCAP}"
@@ -40,6 +41,7 @@ def number_to_emoji(i: int) -> str:
     return "🔢"  # 11+
 
 def read_accounts(path: str) -> List[Tuple[str, Optional[str]]]:
+
     if not os.path.isfile(path):
         raise FileNotFoundError(f"Файл {path} не найден")
     out: List[Tuple[str, Optional[str]]] = []
@@ -48,11 +50,13 @@ def read_accounts(path: str) -> List[Tuple[str, Optional[str]]]:
             line = raw.strip()
             if not line:
                 continue
+
             parts = line.split()
             if len(parts) == 2 and ADDR_RE.fullmatch(parts[1]):
                 label, addr = parts
                 out.append((addr, label))
                 continue
+
             addrs = ADDR_RE.findall(line)
             comment = None
             if "-" in line or "—" in line:
@@ -116,6 +120,7 @@ def fetch_stats(address: str, proxy_order: List[str]) -> Optional[dict]:
     return None
 
 def get_proxy_public_ip(proxy: str) -> Optional[str]:
+
     if proxy in PROXY_IP_CACHE:
         return PROXY_IP_CACHE[proxy]
     try:
@@ -154,6 +159,7 @@ def send_tg(text: str) -> bool:
         return False
 
 def send_tg_chunks(lines: List[str], header: str = "") -> None:
+
     text = ("\n".join(([header] if header else []) + lines))
     if len(text) <= 3500:
         send_tg(text)
@@ -169,7 +175,7 @@ def send_tg_chunks(lines: List[str], header: str = "") -> None:
     if chunk:
         send_tg("\n".join(chunk))
 
-def one_pass() -> List[str]:
+def one_pass(prev_part: Dict[str, int]) -> List[str]:
     accounts = read_accounts(ACCOUNT_FILE)
     proxies  = read_proxies(PROXY_FILE)
     if not accounts:
@@ -184,10 +190,10 @@ def one_pass() -> List[str]:
 
     total = len(accounts)
     print(f"[INFO] Всего аккаунтов: {total}")
-    result_lines = []
+    result_lines: List[str] = []
+    curr_part: Dict[str, int] = {}
 
     for i, (addr, note) in enumerate(accounts, 1):
-
         if REQUEST_DELAY_MAX > 0 or REQUEST_DELAY_MIN > 0:
             time.sleep(random.uniform(REQUEST_DELAY_MIN, REQUEST_DELAY_MAX))
 
@@ -202,24 +208,42 @@ def one_pass() -> List[str]:
         last10 = addr[-10:]
         emoji  = number_to_emoji(i)
 
-        if not data:
-            line_console = f"{emoji} {last10} | {BOLD}ERROR{RESET}{ip_sfx}"
+        if not data or ("participation" not in data):
+
+            line_console = f"{emoji} {last10} | {BOLD}ERROR{RESET}{ip_sfx} | 0"
             print(line_console)
             print(f"Progress: {i}/{total}", flush=True)
-            line_html = f"{emoji} <code>{last10}</code> | <b>ERROR</b>"
+            line_html = f"{emoji} <code>{last10}</code> | <b>ERROR</b> | 0"
         else:
-            part = data.get("participation")
-            line_console = f"{emoji} {last10} | part-{BOLD}{part}{RESET}{ip_sfx}"
+            try:
+                part = int(data.get("participation", 0))
+            except (TypeError, ValueError):
+                part = 0
+            curr_part[addr] = part
+            prev = prev_part.get(addr)
+            delta = (part - prev) if prev is not None else 0
+
+            if delta > 0:
+                delta_str_console = f"{GREEN}+{delta}{RESET}"
+                delta_str_html    = f"<b>+{delta}</b>"
+            else:
+                delta_str_console = "0"
+                delta_str_html    = "0"
+
+            line_console = f"{emoji} {last10} | part-{BOLD}{part}{RESET}{ip_sfx} | {delta_str_console}"
             if note:
                 line_console += f" | {note}"
             print(line_console)
             print(f"Progress: {i}/{total}", flush=True)
 
-            line_html = f"{emoji} <code>{last10}</code> | part-<b>{part}</b>"
+            line_html = f"{emoji} <code>{last10}</code> | part-<b>{part}</b> | {delta_str_html}"
             if note:
                 line_html += f" | {note}"
 
         result_lines.append(line_html)
+
+    prev_part.clear()
+    prev_part.update(curr_part)
 
     print("[DONE] Проход завершён.")
     return result_lines
@@ -230,10 +254,11 @@ def main():
         raise SystemExit(0)
     signal.signal(signal.SIGINT, handle_sigint)
 
-    next_tick = time.monotonic()  # стартовая точка
+    prev_part = PREV_PART  # ссылка на общий словарь
+
+    next_tick = time.monotonic()
     while True:
-        start = time.monotonic()
-        lines = one_pass()
+        lines = one_pass(prev_part)
 
         if lines and NOTIFY_TARGET == "both":
             send_tg_chunks(lines, header="📊 BlockAssist stats")
