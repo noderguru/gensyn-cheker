@@ -22,9 +22,8 @@ pip install -r requirements.txt
 ```bash
 python3 blockassist-cheker.py
 ```
+<img width="589" height="346" alt="image" src="https://github.com/user-attachments/assets/eccb5b28-7dde-454a-881f-88b40302239e" />
 
-<img width="515" height="115" alt="image" src="https://github.com/user-attachments/assets/14d3df4c-155e-4198-b119-99521125427f" />
+<img width="397" height="210" alt="image" src="https://github.com/user-attachments/assets/f8bfdaf7-fd3d-4e7e-8e2a-1b2fd80ed9dc" />
 
-
-<img width="368" height="289" alt="image" src="https://github.com/user-attachments/assets/5b54329a-db89-444c-9a78-8ea0ac31604b" />
 
