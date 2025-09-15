@@ -10,7 +10,9 @@ PEER_ID_FILE = "peer_id.txt"
 SEND_INTERVAL_SECONDS = 3600
 
 BOT_TOKEN = ""
-CHAT_ID = ""
+CHAT_ID_ARRAY = [
+    "123456",
+]
 DEBUG = False
 
 # === Telegram MarkdownV2 escape ===
@@ -21,13 +23,19 @@ def escape_md(text: str) -> str:
 
 def send_telegram(message: str):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message, "parse_mode": "MarkdownV2"}
-    try:
-        resp = requests.post(url, data=payload)
-        if resp.status_code != 200:
-            print("❌ Telegram error:", resp.text)
-    except Exception as e:
-        print("⚠️ Telegram send failed:", e)
+
+    for chat_id in CHAT_ID_ARRAY:
+        payload = {
+            "chat_id": chat_id,
+            "text": message,
+            "parse_mode": "MarkdownV2"
+        }
+        try:
+            resp = requests.post(url, data=payload)
+            if resp.status_code != 200:
+                print(f"❌ Telegram error for chat_id {chat_id}:", resp.text)
+        except Exception as e:
+            print(f"⚠️ Telegram send failed for chat_id {chat_id}:", e)
 
 def eth_call(method_sig: str, encoded_data: str):
     payload = {
