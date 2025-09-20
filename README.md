@@ -2,7 +2,7 @@
 ## 📂 👉 [**Чекер на blockassist**](https://github.com/noderguru/gensyn-cheker/tree/main/blockassist)
 
 
-# 📊 Gensyn "Wins" + "Мotes" + "Rewards"  Tracker Bot
+# 📊 Gensyn "Wins" + "Votes" + "Rewards"  Tracker Bot
 
 Отслеживание ваших ID с автоматической отправкой уведомлений в Telegram 💬
 
