@@ -45,7 +45,7 @@ SEND_INTERVAL_SECONDS = 3000  # интервал в секундах
 ```
 ## ▶️ Запуск
 ```bash
-python3 gensyn-perserID.py
+python3 gensyn-parserID.py
 ```
 <img width="405" height="424" alt="image" src="https://github.com/user-attachments/assets/c7672e13-92ad-4161-b6cf-84c34a3a6b6f" />
 
