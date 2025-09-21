@@ -14,8 +14,8 @@ SEND_INTERVAL_SECONDS = 15000
 REQUEST_DELAY_MIN = 2  # Минимальная пауза
 REQUEST_DELAY_MAX = 8  # Максимальная пауза
 
-BOT_TOKEN = "8063485530:AAHXXXXXXXXXXXXXXxxnOsKMo"
-CHAT_ID = "3000000003"
+BOT_TOKEN = "токен бота можно взять здесь @BotFather"
+CHAT_ID = "id чата можно взять здесь @myidbot"
 DEBUG = False
 
 # === Telegram MarkdownV2 escape ===
