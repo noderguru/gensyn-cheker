@@ -6,7 +6,7 @@ from eth_utils import keccak
 
 # === НАСТРОЙКИ ===
 ALCHEMY_RPC = "https://gensyn-testnet.g.alchemy.com/public"
-CONTRACT = "0xFaD7C5e93f28257429569B854151A1B8DCD404c2"
+CONTRACT = "0x7745a8FE4b8D2D2c3BB103F8dCae822746F35Da0"
 PEER_ID_FILE = "peer_id.txt"
 SEND_INTERVAL_SECONDS = 15000
 
